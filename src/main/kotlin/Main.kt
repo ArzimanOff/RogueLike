@@ -1,3 +1,7 @@
+import data.MapGenerateRepositoryImpl
+import domain.entities.RoomsMap
+import domain.usecases.GenerateCorridorsUseCase
+import domain.usecases.GenerateRoomsMapUseCase
 import presentation.Presenter
 
 

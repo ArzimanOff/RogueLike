@@ -106,7 +106,15 @@ class Game(private val screen: Screen) {
     }
 
     private fun isPositionValid(newX: Int, newY: Int): Boolean {
-        return true
+        return if (
+            newX > 0 && newX < Drawer.MAP_WIDTH &&
+            newY > 0 && newY < Drawer.MAP_HEIGHT
+        ) {
+            roomsMap.checkCoordinatesValid(Pair(newX, newY)) ||
+                    corridors.checkCoordinatesValid(Pair(newX, newY))
+        } else {
+            false
+        }
     }
 
 

@@ -16,5 +16,11 @@ package domain.entities
 data class RoomsMap(
     val width: Int,
     val height: Int,
-    val rooms: MutableMap<Pair<Int, Int>, Room>
-)
+    val rooms: MutableMap<Pair<Int, Int>, Room>,
+    val roomsCoordinatesList: List<Pair<Int, Int>>
+){
+    fun checkCoordinatesValid(coordinates: Pair<Int, Int>): Boolean{
+        println(roomsCoordinatesList)
+        return roomsCoordinatesList.contains(coordinates)
+    }
+}

@@ -18,6 +18,7 @@ object MapGenerateRepositoryImpl : MapGenerateRepository {
 
     private const val MIN_ROOM_WIDTH = 6
     private const val MIN_ROOM_HEIGHT = 6
+    private val roomsCoordinatesList: MutableList<Pair<Int, Int>> = mutableListOf()
 
     override fun generateRoomsMap(): RoomsMap {
         val rooms: MutableMap<Pair<Int, Int>, Room> = mutableMapOf()
@@ -30,7 +31,8 @@ object MapGenerateRepositoryImpl : MapGenerateRepository {
         return RoomsMap(
             MAP_WIDTH,
             MAP_HEIGHT,
-            rooms
+            rooms,
+            roomsCoordinatesList
         )
     }
 
@@ -82,12 +84,26 @@ object MapGenerateRepositoryImpl : MapGenerateRepository {
     private fun generateRoom(x: Int, y: Int): Room {
         val a = random.nextInt(0, CELL_WIDTH - MIN_ROOM_WIDTH)
         val b = random.nextInt(0, CELL_HEIGHT - MIN_ROOM_HEIGHT)
+
+        val topLeftX = x * CELL_WIDTH + 2 + x + (a)
+        val topLeftY = y * CELL_HEIGHT + 2 + y + (b)
+        val w = random.nextInt(MIN_ROOM_WIDTH, CELL_WIDTH - a)
+        val h = random.nextInt(MIN_ROOM_HEIGHT, CELL_HEIGHT - b)
+        fillRoomsCoordinatesList(topLeftX, topLeftY, w, h)
         return Room(
-            x * CELL_WIDTH + 2 + x + (a),
-            y * CELL_HEIGHT + 2 + y + (b),
-            random.nextInt(MIN_ROOM_WIDTH, CELL_WIDTH - a),
-            random.nextInt(MIN_ROOM_HEIGHT, CELL_HEIGHT - b)
+            topLeftX,
+            topLeftY,
+            w,
+            h
         )
+    }
+
+    private fun fillRoomsCoordinatesList(topLeftX: Int, topLeftY: Int, w: Int, h: Int) {
+        for (i in topLeftY..<topLeftY+h){
+            for (j in topLeftX..<topLeftX+w){
+                roomsCoordinatesList.add(Pair(j, i))
+            }
+        }
     }
 
 

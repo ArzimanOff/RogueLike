@@ -108,8 +108,8 @@ class Drawer private constructor(private val screen: Screen) {
     companion object {
         @Volatile
         private var instance: Drawer? = null
-        private const val MAP_WIDTH = 124 //120
-        private const val MAP_HEIGHT = 46 //45
+        const val MAP_WIDTH = 124 //120
+        const val MAP_HEIGHT = 46 //45
 
         // Метод получения единственного экземпляра
         fun getInstance(screen: Screen): Drawer {
