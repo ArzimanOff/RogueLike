@@ -1,5 +1,7 @@
 package domain.entities
 
+import domain.entities.enemies.Enemy
+
 /**
  * Класс хранящий параметры отдельной комнаты
  * @param topLeftX Координата X верхнего-левого угла комнаты
@@ -11,7 +13,8 @@ data class Room(
     val topLeftX: Int,
     val topLeftY: Int,
     val width: Int,
-    val height: Int
+    val height: Int,
+    var enemies: MutableList<Enemy>
 ) {
     val left = minOf(btl.first, btr.first, bbl.first, bbr.first)
     val right = maxOf(btl.first, btr.first, bbl.first, bbr.first)

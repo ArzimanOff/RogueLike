@@ -8,7 +8,7 @@ import com.googlecode.lanterna.terminal.swing.TerminalEmulatorAutoCloseTrigger
 
 class Presenter {
     val terminalFactory = DefaultTerminalFactory()
-        .setInitialTerminalSize(TerminalSize(124, 49))
+        .setInitialTerminalSize(TerminalSize(155, 49))
         .setTerminalEmulatorFrameAutoCloseTrigger(TerminalEmulatorAutoCloseTrigger.CloseOnExitPrivateMode)
         .createTerminal()
 

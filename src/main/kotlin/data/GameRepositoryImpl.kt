@@ -4,10 +4,11 @@ import domain.entities.Corridor
 import domain.entities.CorridorsList
 import domain.entities.Room
 import domain.entities.RoomsMap
-import domain.repository.MapGenerateRepository
+import domain.entities.enemies.Enemy
+import domain.repository.GameRepository
 import kotlin.math.abs
 
-object MapGenerateRepositoryImpl : MapGenerateRepository {
+object GameRepositoryImpl : GameRepository {
 
     private const val MAP_WIDTH = 124 //120
     private const val MAP_HEIGHT = 46 //45
@@ -19,7 +20,6 @@ object MapGenerateRepositoryImpl : MapGenerateRepository {
     private const val MIN_ROOM_WIDTH = 6
     private const val MIN_ROOM_HEIGHT = 6
     private val roomsCoordinatesList: MutableList<Pair<Int, Int>> = mutableListOf()
-
     override fun generateRoomsMap(): RoomsMap {
         val rooms: MutableMap<Pair<Int, Int>, Room> = mutableMapOf()
         for (i in 0..2) {
@@ -94,7 +94,8 @@ object MapGenerateRepositoryImpl : MapGenerateRepository {
             topLeftX,
             topLeftY,
             w,
-            h
+            h,
+            mutableListOf<Enemy>()
         )
     }
 
@@ -105,7 +106,6 @@ object MapGenerateRepositoryImpl : MapGenerateRepository {
             }
         }
     }
-
 
     override fun generateCorridors(roomsMap: RoomsMap): CorridorsList {
 

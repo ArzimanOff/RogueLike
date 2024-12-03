@@ -25,7 +25,7 @@ class Drawer private constructor(private val screen: Screen) {
         }
     }
 
-    fun drawRoom(p: Pair<Int, Int>, room: Room) {
+    fun drawRoomContent(p: Pair<Int, Int>, room: Room) {
         val textGraphics = screen.newTextGraphics()
         textGraphics.foregroundColor = TextColor.ANSI.WHITE
         textGraphics.backgroundColor = TextColor.ANSI.BLACK
@@ -39,9 +39,14 @@ class Drawer private constructor(private val screen: Screen) {
             textGraphics.putString(b.first, b.second, "▓")
         }
 
+        for (enemy in room.enemies){
+            textGraphics.foregroundColor = enemy.type.color
+            textGraphics.putString(enemy.position.first, enemy.position.second, enemy.type.symbol.toString())
+            textGraphics.foregroundColor = TextColor.ANSI.WHITE
+        }
+
         textGraphics.putString(x + w / 2 - 2, y + h / 2, p.toString())
     }
-
 
     fun drawCorridors(corridorCoordinatesList: List<List<Pair<Int, Int>>>) {
         val textGraphics = screen.newTextGraphics()

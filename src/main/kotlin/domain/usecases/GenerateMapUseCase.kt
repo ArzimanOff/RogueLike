@@ -1,10 +1,10 @@
 package domain.usecases
 
 import domain.entities.RoomsMap
-import domain.repository.MapGenerateRepository
+import domain.repository.GameRepository
 
 class GenerateRoomsMapUseCase(
-    private val repository: MapGenerateRepository
+    private val repository: GameRepository
 ) {
     operator fun invoke(): RoomsMap {
         return repository.generateRoomsMap()

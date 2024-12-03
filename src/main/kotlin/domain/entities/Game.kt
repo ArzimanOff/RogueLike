@@ -1,19 +1,21 @@
+package domain.entities
+
 import com.googlecode.lanterna.input.KeyType
 import com.googlecode.lanterna.screen.Screen
-import data.MapGenerateRepositoryImpl
-import domain.entities.CorridorsList
-import domain.entities.Player
-import domain.entities.Room
-import domain.entities.RoomsMap
+import data.GameRepositoryImpl
+import domain.entities.enemies.*
 import domain.usecases.GenerateCorridorsUseCase
 import domain.usecases.GenerateRoomsMapUseCase
 import presentation.Drawer
+import java.lang.RuntimeException
+import kotlin.random.Random
 
 class Game(private val screen: Screen) {
     private val drawer: Drawer = Drawer.getInstance(screen)
-    private val repository = MapGenerateRepositoryImpl
+    private val repository = GameRepositoryImpl
     private val generateMapUseCase = GenerateRoomsMapUseCase(repository)
     private val generateCorridorsUseCase = GenerateCorridorsUseCase(repository)
+    private val level: Level = Level()
 
     private lateinit var roomsMap: RoomsMap
     private lateinit var corridors: CorridorsList
@@ -29,6 +31,67 @@ class Game(private val screen: Screen) {
         render()
         gameLoop()
     }
+
+    private fun generateEnemiesInRoom(room: Room): MutableList<Enemy> {
+        val w = room.width
+        val h = room.height
+        val enemies: MutableList<Enemy> = mutableListOf()
+        var enemiesCnt = 0
+        if (level.value < 3) {
+            if (w * h <= 50) {
+                enemiesCnt = 1
+            } else {
+                enemiesCnt = Random.nextInt(1, 3)
+            }
+        } else if (level.value < 7) {
+
+        } else if (level.value < 13) {
+
+        } else if (level.value < 19) {
+
+        } else {
+
+        }
+
+        for (i in 0..<enemiesCnt) {
+            val enemyType = EnemyType.entries.random()
+            val enemy: Enemy = when (enemyType) {
+                EnemyType.GHOST -> {
+                    Ghost()
+                }
+
+                EnemyType.OGRE -> {
+                    Ogre()
+                }
+
+                EnemyType.SNAKE_MAGE -> {
+                    SnakeMage()
+                }
+
+                EnemyType.VAMPIRE -> {
+                    Vampire()
+                }
+
+                EnemyType.ZOMBIE -> {
+                    Zombie()
+                }
+
+                else -> {
+                    throw RuntimeException("Неопознанный типа врага!")
+                }
+            }
+
+            // Генерируем случайные координаты внутри комнаты
+            val startX = (room.tlX..room.trX).random()
+            val startY = (room.tlY..room.trY).random()
+
+            // Устанавливаем начальные координаты врага
+            enemy.position = Pair(startX, startY)
+            enemies.add(enemy)
+        }
+        return enemies
+    }
+
 
     private fun generatePlayer() {
         player = Player(
@@ -58,12 +121,20 @@ class Game(private val screen: Screen) {
     private fun generateLevel() {
         roomsMap = generateMapUseCase()
         corridors = generateCorridorsUseCase(roomsMap)
+        generateEnemies()
+    }
+
+    private fun generateEnemies() {
+        for (room in roomsMap.rooms.values) {
+            room.enemies = generateEnemiesInRoom(room)
+        }
     }
 
     private fun render() {
         // Отрисовка комнат
         for (r in roomsMap.rooms) {
-            drawer.drawRoom(r.key, r.value)
+            drawer.drawRoomContent(r.key, r.value)
+            println("\nroom: $r")
         }
 
         // Отрисовка коридоров
@@ -92,17 +163,43 @@ class Game(private val screen: Screen) {
     private fun movePlayer(newX: Int, newY: Int) {
         val oldPosition = player.position
 
-        // Убедимся, что новая позиция находится в пределах карты
-        if (isPositionValid(newX, newY)) {
-            // Очистить старую позицию
-            drawer.clearTile(oldPosition)
+        val enemy: Enemy? = checkEnemyInPosition(newX, newY)
 
-            // Обновить координаты игрока
-            player.position = Pair(newX, newY)
+        if (enemy != null) {
+            attackEnemy(enemy)
+        } else {
+            // Убедимся, что новая позиция находится в пределах карты
+            if (isPositionValid(newX, newY)) {
+                // Очистить старую позицию
+                drawer.clearTile(oldPosition)
 
-            // Нарисовать игрока на новой позиции
-            drawer.drawPlayer(player)
+                // Обновить координаты игрока
+                player.position = Pair(newX, newY)
+
+                // Нарисовать игрока на новой позиции
+                drawer.drawPlayer(player)
+            }
         }
+
+    }
+
+    private fun attackEnemy(enemy: Enemy) {
+        println("Атака на $enemy")
+    }
+
+    private fun checkEnemyInPosition(newX: Int, newY: Int): Enemy? {
+        var en: Enemy? = null
+
+        for (room in roomsMap.rooms) {
+            for (enemy in room.value.enemies) {
+                if (enemy.position.first == newX &&
+                    enemy.position.second == newY
+                ){
+                    en = enemy
+                }
+            }
+        }
+        return en
     }
 
     private fun isPositionValid(newX: Int, newY: Int): Boolean {
