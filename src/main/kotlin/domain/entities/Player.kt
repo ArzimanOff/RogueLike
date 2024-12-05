@@ -7,8 +7,11 @@ data class Player(
     var strength: Int, // сила
     var position: Pair<Int, Int>, // Координаты в формате (x, y)
     val backpack: Backpack = Backpack(), // Рюкзак, где храним предметы
-    var isStunned: Boolean = false // Новый флаг для состояния "оглушён"
+    var isStunned: Boolean = false, // Новый флаг для состояния "оглушён"
 ) {
+    var damage: Int = 0
+        get() = (strength / 2 * agility / 2) / 2
+
     // Метод для исцеления
     fun heal(amount: Int) {
         health = (health + amount).coerceAtMost(maxHealth)

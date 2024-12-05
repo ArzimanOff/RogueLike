@@ -4,6 +4,9 @@ import com.googlecode.lanterna.screen.Screen
 import com.googlecode.lanterna.TextColor
 import domain.entities.Player
 import domain.entities.Room
+import domain.entities.enemies.Enemy
+import domain.entities.enemies.EnemyType
+import domain.entities.enemies.Ghost
 
 class Drawer private constructor(private val screen: Screen) {
 
@@ -14,14 +17,31 @@ class Drawer private constructor(private val screen: Screen) {
 
         // Верхняя и нижняя границы
         for (i in 0..<MAP_WIDTH) {
-            textGraphics.putString(i, 0, "-") // Верхняя граница
-            textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
+            if ( i%10 == 0){
+                textGraphics.putString(i, 0, ("_").toString())
+                textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
+
+            } else {
+
+                textGraphics.putString(i, 0, (i%10).toString()) // Верхняя граница
+                textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
+            }
+//            textGraphics.putString(i, 0, "-") // Верхняя граница
+//            textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
         }
 
         // Левая и правая границы
         for (i in 0..<MAP_HEIGHT) {
-            textGraphics.putString(0, i, "|") // Левая граница
-            textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
+            if ( i%10 == 0){
+                textGraphics.putString(0, i, "_") // Левая граница
+                textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
+            } else {
+
+                textGraphics.putString(0, i, (i%10).toString()) // Левая граница
+                textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
+            }
+//            textGraphics.putString(0, i, "|") // Левая граница
+//            textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
         }
     }
 
@@ -40,12 +60,10 @@ class Drawer private constructor(private val screen: Screen) {
         }
 
         for (enemy in room.enemies){
-            textGraphics.foregroundColor = enemy.type.color
-            textGraphics.putString(enemy.position.first, enemy.position.second, enemy.type.symbol.toString())
-            textGraphics.foregroundColor = TextColor.ANSI.WHITE
+            drawEnemy(enemy)
         }
 
-        textGraphics.putString(x + w / 2 - 2, y + h / 2, p.toString())
+        //textGraphics.putString(x + w / 2 - 2, y + h / 2, p.toString())
     }
 
     fun drawCorridors(corridorCoordinatesList: List<List<Pair<Int, Int>>>) {
@@ -66,6 +84,19 @@ class Drawer private constructor(private val screen: Screen) {
         textGraphics.foregroundColor = TextColor.ANSI.CYAN
         textGraphics.backgroundColor = TextColor.ANSI.BLACK
         textGraphics.putString(player.position.first, player.position.second, "@")
+    }
+
+    private fun drawEnemy(enemy: Enemy) {
+        val textGraphics = screen.newTextGraphics()
+        textGraphics.foregroundColor = enemy.type.color
+        if (enemy.type == EnemyType.GHOST && (enemy as Ghost).getVisibleStatus()){
+            // если true, значит призрак невидим, отображать не надо
+            textGraphics.putString(enemy.position.first, enemy.position.second, "`")
+
+        } else{
+            textGraphics.putString(enemy.position.first, enemy.position.second, enemy.type.symbol.toString())
+        }
+        textGraphics.foregroundColor = TextColor.ANSI.WHITE
     }
 
     fun clearTile(position: Pair<Int, Int>) {

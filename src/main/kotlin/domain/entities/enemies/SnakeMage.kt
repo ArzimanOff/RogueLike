@@ -1,19 +1,23 @@
 package domain.entities.enemies
 
 import domain.entities.Player
+import domain.entities.Room
 
 // Змей-маг
 class SnakeMage : Enemy(
     type = EnemyType.SNAKE_MAGE,
-    health = 70,
-    agility = 100,
+    health = 200,
+    agility = 40,
     speed = 3,
     strength = 30,
-    hostility = 90,
+    hostility = 7,
     position = Pair(0, 0)
 ) {
-    override fun move() {
+
+    override fun move(room: Room): Pair<Int, Int>  {
         println("Snake Mage slithers diagonally across the room.")
+        return Pair(0, 0)
+
     }
 
     override fun attack(target: Player) {

@@ -8,6 +8,9 @@ import domain.usecases.GenerateCorridorsUseCase
 import domain.usecases.GenerateRoomsMapUseCase
 import presentation.Drawer
 import java.lang.RuntimeException
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 class Game(private val screen: Screen) {
@@ -83,7 +86,7 @@ class Game(private val screen: Screen) {
 
             // Генерируем случайные координаты внутри комнаты
             val startX = (room.tlX..room.trX).random()
-            val startY = (room.tlY..room.trY).random()
+            val startY = (room.tlY..room.blY).random()
 
             // Устанавливаем начальные координаты врага
             enemy.position = Pair(startX, startY)
@@ -97,8 +100,8 @@ class Game(private val screen: Screen) {
         player = Player(
             maxHealth = 100,
             health = 100,
-            agility = 10,
-            strength = 15,
+            agility = 8,
+            strength = 10,
             position = Pair(0, 0) // Временное значение
         )
         placePlayerInRandomRoom(player, roomsMap.rooms)
@@ -111,7 +114,7 @@ class Game(private val screen: Screen) {
 
         // Генерируем случайные координаты внутри комнаты
         val startX = (randomRoom.tlX..randomRoom.trX).random()
-        val startY = (randomRoom.tlY..randomRoom.trY).random()
+        val startY = (randomRoom.tlY..randomRoom.blY).random()
 
         // Устанавливаем начальные координаты игрока
         player.position = Pair(startX, startY)
@@ -131,10 +134,9 @@ class Game(private val screen: Screen) {
     }
 
     private fun render() {
-        // Отрисовка комнат
+        // Отрисовка комнат и их содержимого
         for (r in roomsMap.rooms) {
             drawer.drawRoomContent(r.key, r.value)
-            println("\nroom: $r")
         }
 
         // Отрисовка коридоров
@@ -172,10 +174,8 @@ class Game(private val screen: Screen) {
             if (isPositionValid(newX, newY)) {
                 // Очистить старую позицию
                 drawer.clearTile(oldPosition)
-
                 // Обновить координаты игрока
                 player.position = Pair(newX, newY)
-
                 // Нарисовать игрока на новой позиции
                 drawer.drawPlayer(player)
             }
@@ -184,8 +184,24 @@ class Game(private val screen: Screen) {
     }
 
     private fun attackEnemy(enemy: Enemy) {
-        println("Атака на $enemy")
+
+        if (enemy.type == EnemyType.VAMPIRE &&
+            !(enemy as Vampire).firstAttackMissed
+        ) {
+            println("Первая атака по Вампиру всегда мимо!")
+            enemy.firstAttackMissed = true
+        } else {
+            if (enemy.takeDamage(player.damage)) {
+                for (room in roomsMap.rooms) {
+                    room.value.enemies.remove(enemy)
+                }
+                println("${enemy.type} был побежден!")
+            } else {
+                println("${enemy.type} получил урон ${player.damage}. Осталось здоровья: ${enemy.health}")
+            }
+        }
     }
+
 
     private fun checkEnemyInPosition(newX: Int, newY: Int): Enemy? {
         var en: Enemy? = null
@@ -194,7 +210,7 @@ class Game(private val screen: Screen) {
             for (enemy in room.value.enemies) {
                 if (enemy.position.first == newX &&
                     enemy.position.second == newY
-                ){
+                ) {
                     en = enemy
                 }
             }
@@ -215,6 +231,40 @@ class Game(private val screen: Screen) {
     }
 
 
+    private fun nextGameStep() {
+        for (room in roomsMap.rooms) {
+            for (enemy in room.value.enemies) {
+
+                val distance = findDistance(player, enemy)
+                if (distance <= enemy.hostility + level.value/3) {
+                    val newPosition = enemy.move(room.value)
+                    enemy.setActiveStatus(true)
+                } else {
+                    enemy.setActiveStatus(false)
+                }
+
+                if (enemy.type == EnemyType.GHOST){
+                    val newPosition = enemy.move(room.value)
+                    if (isPositionValid(newPosition.first, newPosition.second)){
+                        drawer.clearTile(enemy.position)
+                        enemy.position = newPosition
+                    }
+                } else {
+                    enemy.move(room.value)
+                }
+
+            }
+        }
+    }
+
+    private fun findDistance(a: Player, b: Enemy): Int {
+        //println("игрок: ${a.position} враг: $b на позиции ${b.position} ---> расстояние до игрока $d")
+        return sqrt((
+                abs(a.position.first - b.position.first).toDouble().pow(2.0)
+                        +
+                        abs(a.position.second - b.position.second).toDouble().pow(2.0))).toInt()
+    }
+
     private fun moveUp() {
         println("Move up")
         // Вызов методов для движения вверх
@@ -222,8 +272,10 @@ class Game(private val screen: Screen) {
             player.position.first + 0,
             player.position.second + (-1),
         )
+        nextGameStep()
         render()
     }
+
 
     private fun moveDown() {
         println("Move down")
@@ -232,6 +284,7 @@ class Game(private val screen: Screen) {
             player.position.first + 0,
             player.position.second + 1,
         )
+        nextGameStep()
         render()
     }
 
@@ -242,6 +295,7 @@ class Game(private val screen: Screen) {
             player.position.first + (-1),
             player.position.second + 0,
         )
+        nextGameStep()
         render()
     }
 
@@ -252,6 +306,7 @@ class Game(private val screen: Screen) {
             player.position.first + 1,
             player.position.second + 0,
         )
+        nextGameStep()
         render()
     }
 }

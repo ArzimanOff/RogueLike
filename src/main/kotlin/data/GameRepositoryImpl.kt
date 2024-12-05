@@ -285,11 +285,11 @@ object GameRepositoryImpl : GameRepository {
             coordinates.add(Pair(finishX, finishY))
         }
 
-        println("from:")
-        println(from)
-        println("to: ")
-        println(to)
-        println(coordinates)
+//        println("from:")
+//        println(from)
+//        println("to: ")
+//        println(to)
+//        println(coordinates)
 
         return coordinates
     }

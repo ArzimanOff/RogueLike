@@ -20,7 +20,6 @@ data class RoomsMap(
     val roomsCoordinatesList: List<Pair<Int, Int>>
 ){
     fun checkCoordinatesValid(coordinates: Pair<Int, Int>): Boolean{
-        println(roomsCoordinatesList)
         return roomsCoordinatesList.contains(coordinates)
     }
 }
