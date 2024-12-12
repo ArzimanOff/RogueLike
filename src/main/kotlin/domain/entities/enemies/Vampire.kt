@@ -15,11 +15,9 @@ class Vampire : Enemy(
 ) {
 
     var firstAttackMissed = false
-
     override fun move(room: Room): Pair<Int, Int>  {
         println("Vampire moves swiftly towards the player.")
         return Pair(0, 0)
-
     }
 
     override fun attack(target: Player) {

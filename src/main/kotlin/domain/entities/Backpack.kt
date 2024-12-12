@@ -1,5 +1,7 @@
 package domain.entities
 
+import domain.items.Item
+
 data class Backpack(
     val inventory: MutableList<Item> = mutableListOf()
 ) {

@@ -7,6 +7,7 @@ import domain.entities.Room
 import domain.entities.enemies.Enemy
 import domain.entities.enemies.EnemyType
 import domain.entities.enemies.Ghost
+import domain.items.ItemType
 
 class Drawer private constructor(private val screen: Screen) {
 
@@ -17,33 +18,18 @@ class Drawer private constructor(private val screen: Screen) {
 
         // Верхняя и нижняя границы
         for (i in 0..<MAP_WIDTH) {
-            if ( i%10 == 0){
-                textGraphics.putString(i, 0, ("_").toString())
-                textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
-
-            } else {
-
-                textGraphics.putString(i, 0, (i%10).toString()) // Верхняя граница
-                textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
-            }
-//            textGraphics.putString(i, 0, "-") // Верхняя граница
-//            textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
+            textGraphics.putString(i, 0, "-") // Верхняя граница
+            textGraphics.putString(i, MAP_HEIGHT, "-") // Нижняя граница
         }
 
         // Левая и правая границы
         for (i in 0..<MAP_HEIGHT) {
-            if ( i%10 == 0){
-                textGraphics.putString(0, i, "_") // Левая граница
-                textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
-            } else {
-
-                textGraphics.putString(0, i, (i%10).toString()) // Левая граница
-                textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
-            }
-//            textGraphics.putString(0, i, "|") // Левая граница
-//            textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
+            textGraphics.putString(0, i, "|") // Левая граница
+            textGraphics.putString(MAP_WIDTH, i, "|") // Правая граница
         }
     }
+
+
 
     fun drawRoomContent(p: Pair<Int, Int>, room: Room) {
         val textGraphics = screen.newTextGraphics()
@@ -59,12 +45,41 @@ class Drawer private constructor(private val screen: Screen) {
             textGraphics.putString(b.first, b.second, "▓")
         }
 
-        for (enemy in room.enemies){
+        // Отрисовка врагов в комнате
+        for (enemy in room.enemies) {
             drawEnemy(enemy)
         }
 
-        //textGraphics.putString(x + w / 2 - 2, y + h / 2, p.toString())
+        // Отрисовка предметов в комнате
+        for (item in room.items) {
+            if (item.position.first in x..<(x + w) && item.position.second in y..<(y + h)) {
+                textGraphics.putString(item.position.first, item.position.second, when (item.type) {
+                    ItemType.FOOD -> "F"
+                    ItemType.ELIXIR -> "E"
+                    ItemType.SCROLL -> "S"
+                    ItemType.TREASURE -> "T"
+                    ItemType.WEAPON -> "W"
+                    else -> "?"
+                })
+            }
+        }
+
+        // textGraphics.putString(x + w / 2 - 2, y + h / 2, p.toString())
     }
+
+    private fun drawEnemy(enemy: Enemy) {
+        val textGraphics = screen.newTextGraphics()
+        textGraphics.foregroundColor = enemy.type.color
+        if (enemy.type == EnemyType.GHOST && (enemy as Ghost).getVisibleStatus()){
+            // если true, значит призрак невидим, отображать не надо
+            textGraphics.putString(enemy.position.first, enemy.position.second, "`")
+        } else{
+            textGraphics.putString(enemy.position.first, enemy.position.second, enemy.type.symbol.toString())
+        }
+        textGraphics.foregroundColor = TextColor.ANSI.WHITE
+    }
+
+
 
     fun drawCorridors(corridorCoordinatesList: List<List<Pair<Int, Int>>>) {
         val textGraphics = screen.newTextGraphics()
@@ -84,19 +99,6 @@ class Drawer private constructor(private val screen: Screen) {
         textGraphics.foregroundColor = TextColor.ANSI.CYAN
         textGraphics.backgroundColor = TextColor.ANSI.BLACK
         textGraphics.putString(player.position.first, player.position.second, "@")
-    }
-
-    private fun drawEnemy(enemy: Enemy) {
-        val textGraphics = screen.newTextGraphics()
-        textGraphics.foregroundColor = enemy.type.color
-        if (enemy.type == EnemyType.GHOST && (enemy as Ghost).getVisibleStatus()){
-            // если true, значит призрак невидим, отображать не надо
-            textGraphics.putString(enemy.position.first, enemy.position.second, "`")
-
-        } else{
-            textGraphics.putString(enemy.position.first, enemy.position.second, enemy.type.symbol.toString())
-        }
-        textGraphics.foregroundColor = TextColor.ANSI.WHITE
     }
 
     fun clearTile(position: Pair<Int, Int>) {

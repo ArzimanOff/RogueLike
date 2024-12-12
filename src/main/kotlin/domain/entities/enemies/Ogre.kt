@@ -13,7 +13,6 @@ class Ogre : Enemy(
     hostility = 4,
     position = Pair(0, 0)
 ) {
-
     private var needsRest = false
 
     override fun move(room: Room): Pair<Int, Int>  {
@@ -25,7 +24,6 @@ class Ogre : Enemy(
         }
         return Pair(0, 0)
     }
-
     override fun attack(target: Player) {
         if (needsRest) {
             println("Ogre cannot attack while resting!")

@@ -1,5 +1,7 @@
 package domain.entities
 
+import domain.items.*
+
 data class Player(
     var maxHealth: Int,
     var health: Int,
@@ -7,10 +9,13 @@ data class Player(
     var strength: Int, // сила
     var position: Pair<Int, Int>, // Координаты в формате (x, y)
     val backpack: Backpack = Backpack(), // Рюкзак, где храним предметы
-    var isStunned: Boolean = false, // Новый флаг для состояния "оглушён"
+    var isStunned: Boolean = false // Новый флаг для состояния "оглушён"
 ) {
     var damage: Int = 0
         get() = (strength / 2 * agility / 2) / 2
+    fun pickUpItem(item: Item): Boolean {
+        return backpack.addItem(item)
+    }
 
     // Метод для исцеления
     fun heal(amount: Int) {
@@ -21,6 +26,20 @@ data class Player(
     fun increaseMaxHealth(amount: Int) {
         maxHealth += amount
         health = health.coerceAtMost(maxHealth)
+    }
+
+    fun applyBuff(attribute: String, amount: Int, duration: Int) {
+        when (attribute.lowercase()) {
+            "agility" -> agility += amount
+            "strength" -> strength += amount
+            // Логика для временного эффекта и его длительности
+        }
+    }
+
+    // Метод для добавления золота
+    fun addGold(amount: Int) {
+        // Реализация метода добавления золота к инвентарю или атрибуту игрока
+        println("Gold added: $amount.")
     }
 
     // Метод для уменьшения максимального здоровья
@@ -60,13 +79,28 @@ data class Player(
     }
 
     // Добавление предмета в рюкзак
-    fun addItem(item: Item) {
-        backpack.addItem(item)
+
+
+    fun useItem(item: Item) {
+        // Проверяем, в инвентаре ли предмет
+        if (backpack.inventory.contains(item)) {
+            // Применяем эффект предмета
+            item.applyEffect(this)
+
+            // Удаляем предмет из инвентаря, если он потребляемый
+            if (item is Food || item is Elixir || item is Scroll || item is Weapon) {
+                backpack.removeItem(item)
+                println("${item.type} removed from inventory.")
+            }
+        } else {
+            println("Item not found in inventory.")
+        }
     }
 
-    // Удаление предмета из рюкзака
-    fun removeItem(item: Item): Boolean {
-        return backpack.removeItem(item)
+    // Метод для добавления предмета в рюкзак
+    fun addItem(item: Item) {
+        backpack.addItem(item)
+        println("${item.type} added to inventory.")
     }
 
     // Проверка содержимого рюкзака

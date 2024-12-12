@@ -1,6 +1,7 @@
 package domain.entities
 
 import domain.entities.enemies.Enemy
+import domain.items.Item
 
 /**
  * Класс хранящий параметры отдельной комнаты
@@ -14,7 +15,8 @@ data class Room(
     val topLeftY: Int,
     val width: Int,
     val height: Int,
-    var enemies: MutableList<Enemy>
+    var enemies: MutableList<Enemy>,
+    var items: MutableList<Item> = mutableListOf()  // список для предметов
 ) {
     val left = minOf(btl.first, btr.first, bbl.first, bbr.first)
     val right = maxOf(btl.first, btr.first, bbl.first, bbr.first)

@@ -14,7 +14,6 @@ class Ghost : Enemy(
     hostility = 2,
     position = Pair(0, 0)
 ) {
-
     private var invisible = false
     fun getVisibleStatus(): Boolean{
         return invisible
@@ -34,28 +33,22 @@ class Ghost : Enemy(
                 invisible = !invisible
             }
         }
-
         // телепортация в случайную координату в пределах комнаты:
         // Генерируем случайные координаты внутри комнаты
         val randomX = (room.tlX..room.trX).random()
         val randomY = (room.tlY..room.blY).random()
-
         return Pair(randomX, randomY)
     }
 
     override fun attack(target: Player) {
         println("Ghost attacks with a chilling touch.")
     }
-
     private fun becomeVisible(): Boolean{
         // генерируем число от 0 до 9, если число <= 6, призрак становится видимым
         return Random.nextInt(0, 10) <= 6
     }
-
     private fun becomeInvisible(): Boolean{
         // генерируем число от 0 до 9, если число <= 4, призрак становится невидимым
         return Random.nextInt(0, 10) <= 2
     }
-
-
 }

@@ -13,11 +13,9 @@ class SnakeMage : Enemy(
     hostility = 7,
     position = Pair(0, 0)
 ) {
-
     override fun move(room: Room): Pair<Int, Int>  {
         println("Snake Mage slithers diagonally across the room.")
         return Pair(0, 0)
-
     }
 
     override fun attack(target: Player) {

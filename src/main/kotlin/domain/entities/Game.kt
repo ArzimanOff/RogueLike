@@ -4,6 +4,7 @@ import com.googlecode.lanterna.input.KeyType
 import com.googlecode.lanterna.screen.Screen
 import data.GameRepositoryImpl
 import domain.entities.enemies.*
+import domain.items.*
 import domain.usecases.GenerateCorridorsUseCase
 import domain.usecases.GenerateRoomsMapUseCase
 import presentation.Drawer
@@ -34,6 +35,7 @@ class Game(private val screen: Screen) {
         render()
         gameLoop()
     }
+
 
     private fun generateEnemiesInRoom(room: Room): MutableList<Enemy> {
         val w = room.width
@@ -130,6 +132,7 @@ class Game(private val screen: Screen) {
     private fun generateEnemies() {
         for (room in roomsMap.rooms.values) {
             room.enemies = generateEnemiesInRoom(room)
+            generateItemsInRoom(room) // Генерируем предметы в комнате
         }
     }
 
@@ -137,6 +140,7 @@ class Game(private val screen: Screen) {
         // Отрисовка комнат и их содержимого
         for (r in roomsMap.rooms) {
             drawer.drawRoomContent(r.key, r.value)
+            println("\nroom: $r")
         }
 
         // Отрисовка коридоров
@@ -148,43 +152,89 @@ class Game(private val screen: Screen) {
     private fun gameLoop() {
         while (true) {
             val keyStroke = screen.pollInput() ?: continue
-            // влево ->  xScale = -1, yScale = 0
-            // вправо ->  xScale = 1, yScale = 0
-            // вверх ->  xScale = 0, yScale = -1
-            // вниз ->  xScale = 0, yScale = 1
             when (keyStroke.character) {
                 'w' -> moveUp()
                 's' -> moveDown()
                 'a' -> moveLeft()
                 'd' -> moveRight()
+                'u' -> useItem() // Метод для использования предмета
             }
             if (keyStroke.keyType == KeyType.Escape) break
         }
     }
 
+    private fun useItem() {
+        // Логика для использования предмета из инвентаря
+        if (player.backpack.inventory.isNotEmpty()) {
+            val itemToUse = player.backpack.inventory.first() // Пример: используем первый предмет
+            player.useItem(itemToUse)
+        } else {
+            println("No items in inventory to use.")
+        }
+
+        println("\n ---------------\n ${player.listInventory()} \n ----------------------- \n")
+    }
+
     private fun movePlayer(newX: Int, newY: Int) {
         val oldPosition = player.position
-
         val enemy: Enemy? = checkEnemyInPosition(newX, newY)
 
-        if (enemy != null) {
+        // Проверка наличия предмета на новой позиции
+        val item: Item? = checkItemInPosition(newX, newY)
+
+        if (item != null) {
+            // Если предмет найден, игрок подбирает его
+            player.pickUpItem(item)
+            // Удалим предмет из комнаты
+            getCurrentRoom().items.remove(item)
+        } else if (enemy != null) {
             attackEnemy(enemy)
         } else {
             // Убедимся, что новая позиция находится в пределах карты
             if (isPositionValid(newX, newY)) {
                 // Очистить старую позицию
                 drawer.clearTile(oldPosition)
+
                 // Обновить координаты игрока
                 player.position = Pair(newX, newY)
+
                 // Нарисовать игрока на новой позиции
                 drawer.drawPlayer(player)
             }
         }
-
     }
 
-    private fun attackEnemy(enemy: Enemy) {
 
+
+
+
+    private fun checkItemInPosition(newX: Int, newY: Int): Item? {
+        for (room in roomsMap.rooms.values) {
+            for (item in room.items) {
+                if (item.position.first == newX && item.position.second == newY) {
+                    return item
+                }
+            }
+        }
+        return null
+    }
+
+
+    private fun pickupItem(item: Item) {
+        // Добавляем предмет в рюкзак игрока
+        player.addItem(item)
+
+        // Удаляем предмет из комнаты
+        val currentRoom = getCurrentRoom()
+        currentRoom.items.remove(item)
+
+        // Выводим информацию об успешном добавлении
+        println("Picked up ${item.type}!")
+    }
+
+
+
+    private fun attackEnemy(enemy: Enemy) {
         if (enemy.type == EnemyType.VAMPIRE &&
             !(enemy as Vampire).firstAttackMissed
         ) {
@@ -202,6 +252,44 @@ class Game(private val screen: Screen) {
         }
     }
 
+    private fun nextGameStep() {
+        for (room in roomsMap.rooms) {
+            for (enemy in room.value.enemies) {
+                val distance = findDistance(player, enemy)
+                if (distance <= enemy.hostility + level.value/3) {
+                    val newPosition = enemy.move(room.value)
+                    enemy.setActiveStatus(true)
+                } else {
+                    enemy.setActiveStatus(false)
+                }
+                if (enemy.type == EnemyType.GHOST){
+                    val newPosition = enemy.move(room.value)
+                    if (isPositionValid(newPosition.first, newPosition.second)){
+                        drawer.clearTile(enemy.position)
+                        enemy.position = newPosition
+                    }
+                } else {
+                    enemy.move(room.value)
+                }
+            }
+        }
+    }
+    private fun findDistance(a: Player, b: Enemy): Int {
+        //println("игрок: ${a.position} враг: $b на позиции ${b.position} ---> расстояние до игрока $d")
+        return sqrt((
+                abs(a.position.first - b.position.first).toDouble().pow(2.0)
+                        +
+                        abs(a.position.second - b.position.second).toDouble().pow(2.0))).toInt()
+    }
+
+    private fun getCurrentRoom(): Room {
+        return roomsMap.rooms.values.firstOrNull { room ->
+            player.position.first in room.topLeftX until room.topLeftX + room.width &&
+                    player.position.second in room.topLeftY until room.topLeftY + room.height
+        } ?: throw IllegalStateException("Player is not in any room")
+    }
+
+
 
     private fun checkEnemyInPosition(newX: Int, newY: Int): Enemy? {
         var en: Enemy? = null
@@ -218,52 +306,29 @@ class Game(private val screen: Screen) {
         return en
     }
 
+//    private fun checkItemInPosition(newX: Int, newY: Int): Item? {
+//        val item: Item? = null
+//
+//        for (room in roomsMap.rooms) {
+//            for (item in room.value.items) {
+//                if (item.position.first == newX)
+//            }
+//        }
+//
+//        return item
+//    }
+
     private fun isPositionValid(newX: Int, newY: Int): Boolean {
-        return if (
-            newX > 0 && newX < Drawer.MAP_WIDTH &&
-            newY > 0 && newY < Drawer.MAP_HEIGHT
-        ) {
-            roomsMap.checkCoordinatesValid(Pair(newX, newY)) ||
-                    corridors.checkCoordinatesValid(Pair(newX, newY))
-        } else {
-            false
+        if (newX < 0 || newX >= Drawer.MAP_WIDTH || newY < 0 || newY >= Drawer.MAP_HEIGHT) {
+            return false // Если выход за пределы карты
         }
+
+        // Проверяем валидность координат в комнатах и коридорах
+        return roomsMap.checkCoordinatesValid(Pair(newX, newY)) ||
+                corridors.checkCoordinatesValid(Pair(newX, newY))
     }
 
 
-    private fun nextGameStep() {
-        for (room in roomsMap.rooms) {
-            for (enemy in room.value.enemies) {
-
-                val distance = findDistance(player, enemy)
-                if (distance <= enemy.hostility + level.value/3) {
-                    val newPosition = enemy.move(room.value)
-                    enemy.setActiveStatus(true)
-                } else {
-                    enemy.setActiveStatus(false)
-                }
-
-                if (enemy.type == EnemyType.GHOST){
-                    val newPosition = enemy.move(room.value)
-                    if (isPositionValid(newPosition.first, newPosition.second)){
-                        drawer.clearTile(enemy.position)
-                        enemy.position = newPosition
-                    }
-                } else {
-                    enemy.move(room.value)
-                }
-
-            }
-        }
-    }
-
-    private fun findDistance(a: Player, b: Enemy): Int {
-        //println("игрок: ${a.position} враг: $b на позиции ${b.position} ---> расстояние до игрока $d")
-        return sqrt((
-                abs(a.position.first - b.position.first).toDouble().pow(2.0)
-                        +
-                        abs(a.position.second - b.position.second).toDouble().pow(2.0))).toInt()
-    }
 
     private fun moveUp() {
         println("Move up")
@@ -275,7 +340,6 @@ class Game(private val screen: Screen) {
         nextGameStep()
         render()
     }
-
 
     private fun moveDown() {
         println("Move down")
@@ -309,4 +373,32 @@ class Game(private val screen: Screen) {
         nextGameStep()
         render()
     }
+
+    private fun generateItemsInRoom(room: Room) {
+        val itemsCount = Random.nextInt(1, 4) // Случайное количество предметов
+        for (i in 0 until itemsCount) {
+            val itemType = ItemType.values().random() // Случайный тип предмета
+
+            // Генерация позиции для предмета в пределах комнаты
+            val itemPosition = Pair(
+                Random.nextInt(room.topLeftX, room.topLeftX + room.width),
+                Random.nextInt(room.topLeftY, room.topLeftY + room.height)
+            )
+
+            // Создаем предмет с заданной позицией
+            val item = when (itemType) {
+                ItemType.FOOD -> Food(itemPosition, Random.nextInt(5, 20))
+                ItemType.ELIXIR -> Elixir(itemPosition, "agility", Random.nextInt(1, 5), 3)
+                ItemType.SCROLL -> Scroll(itemPosition, "strength", Random.nextInt(1, 10))
+                ItemType.TREASURE -> Treasure(itemPosition, Random.nextInt(1, 100))
+                ItemType.WEAPON -> Weapon(itemPosition, Random.nextInt(1, 20))
+            }
+            room.items.add(item) // Добавляем предмет в комнату
+        }
+    }
 }
+
+
+
+
+
